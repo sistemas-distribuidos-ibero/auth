@@ -1,0 +1,22 @@
+# Ignorar archivos relacionados con Git
+.git
+.gitignore
+
+# Ignorar archivos de entorno
+.env
+
+# Ignorar archivos de bytecode de Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+
+# Ignorar directorios virtualenv
+venv
+.env/
+.venv/
+
+# Ignorar archivos temporales del sistema operativo
+*.swp
+*.swo
+*.DS_Store
