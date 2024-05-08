@@ -8,12 +8,10 @@ import os
 
 # Configuración de la aplicación
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
-    'DATABASE_URL', 'postgresql://alejandrolinares:123456@localhost/usuarios_flask')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key')
-app.config['JWT_SECRET_KEY'] = os.getenv(
-    'JWT_SECRET_KEY', 'your-jwt-secret-key')
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
 
 db = SQLAlchemy(app)
@@ -92,4 +90,7 @@ def user():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True)
+
+    debug = os.getenv('DEBUG') == '1'
+
+    app.run(debug=debug, port=os.getenv('PORT'), host=os.getenv('HOST'))
