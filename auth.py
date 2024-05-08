@@ -1,21 +1,21 @@
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import UserMixin, login_user, logout_user, LoginManager, current_user
+from flask_login import UserMixin, login_user, logout_user, LoginManager, current_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
-from datetime import timedelta, datetime
+from flask_cors import CORS
 import os
+from datetime import datetime
+
+
 
 # Configuración de la aplicación
 app = Flask(__name__)
+CORS(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)
 
 db = SQLAlchemy(app)
-jwt = JWTManager(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 
@@ -64,27 +64,17 @@ def login():
         return jsonify({'error': 'Missing data'}), 400
     user = User.query.filter_by(email=data['email']).first()
     if user and check_password_hash(user.password, data['password']):
-        access_token = create_access_token(identity=user.id)
-        return jsonify(access_token=access_token), 200
+        login_user(user)
+        return jsonify({'authenticated': True}), 200
     else:
-        return jsonify({'error': 'Invalid credentials'}), 401
+        return jsonify({'authenticated': False}), 401
 
 
 @app.route('/logout', methods=['POST'])
-@jwt_required()
+@login_required
 def logout():
     logout_user()
     return jsonify({'message': 'Logged out successfully'}), 200
-
-
-@app.route('/user', methods=['GET'])
-@jwt_required()
-def user():
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({'error': 'User not found'}), 404
-    return jsonify({'id': user.id, 'name': user.name}), 200
 
 
 if __name__ == '__main__':
