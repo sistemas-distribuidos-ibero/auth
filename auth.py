@@ -57,6 +57,9 @@ class OrderProduct(db.Model):
         'order.id'), primary_key=True)
     product_id = db.Column(db.Integer, primary_key=True)
     quantity = db.Column(db.Integer)
+    order = db.relationship(
+        'Order', backref=db.backref('order_products', lazy=True))
+
 
 # Rutas de la aplicación
 
