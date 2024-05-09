@@ -22,9 +22,18 @@ login_manager.init_app(app)
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+# Definición de modelos
+
+
+class Role(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50))
+
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    role_id = db.Column(db.Integer, db.ForeignKey('role.id'))
+    role = db.relationship('Role', backref=db.backref('users', lazy=True))
     name = db.Column(db.String(100))
     lastname = db.Column(db.String(100))
     email = db.Column(db.String(100), unique=True)
@@ -33,6 +42,23 @@ class User(UserMixin, db.Model):
     updated_at = db.Column(
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_banned = db.Column(db.Boolean, default=False)
+
+
+class Order(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user = db.relationship('User', backref=db.backref('orders', lazy=True))
+    price = db.Column(db.Float)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class OrderProduct(db.Model):
+    order_id = db.Column(db.Integer, db.ForeignKey(
+        'order.id'), primary_key=True)
+    product_id = db.Column(db.Integer, primary_key=True)
+    quantity = db.Column(db.Integer)
+
+# Rutas de la aplicación
 
 
 @app.route('/register', methods=['POST'])
@@ -45,8 +71,9 @@ def register():
     try:
         hashed_password = generate_password_hash(
             data['password'], method='pbkdf2:sha256', salt_length=8)
-        new_user = User(name=data['name'], lastname=data['lastname'],
-                        email=data['email'], password=hashed_password)
+        new_user = User(name=data['name'], lastname=data['lastname'], email=data['email'],
+                        # Default role_id
+                        password=hashed_password, role_id=data.get('role_id', 1))
         db.session.add(new_user)
         db.session.commit()
         return jsonify({'message': 'User registered successfully'}), 201
@@ -79,5 +106,4 @@ if __name__ == '__main__':
         db.create_all()
 
     debug = os.getenv('DEBUG') == '1'
-
     app.run(debug=debug, port=os.getenv('PORT'), host=os.getenv('HOST'))
