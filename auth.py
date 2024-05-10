@@ -76,7 +76,10 @@ def login():
     user = Users.query.filter_by(email=data['email']).first()
     if user and check_password_hash(user.password, data['password']):
         login_user(user)
-        return jsonify({'authenticated': True}), 200
+        return jsonify({
+            'authenticated': True,
+            'user': user.to_dict(),   
+        }), 200
     else:
         return jsonify({'authenticated': False}), 401
 
