@@ -25,15 +25,15 @@ def load_user(user_id):
 # Definición de modelos
 
 
-class Role(db.Model):
+class Roles(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50))
 
 
-class User(UserMixin, db.Model):
+class Users(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    role_id = db.Column(db.Integer, db.ForeignKey('role.id'))
-    role = db.relationship('Role', backref=db.backref('users', lazy=True))
+    id_role = db.Column(db.Integer, db.ForeignKey('roles.id'))
+    role = db.relationship('Roles', backref=db.backref('users', lazy=True))
     name = db.Column(db.String(100))
     lastname = db.Column(db.String(100))
     email = db.Column(db.String(100), unique=True)
@@ -44,23 +44,6 @@ class User(UserMixin, db.Model):
     is_banned = db.Column(db.Boolean, default=False)
 
 
-class Order(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    user = db.relationship('User', backref=db.backref('orders', lazy=True))
-    price = db.Column(db.Float)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-
-class OrderProduct(db.Model):
-    order_id = db.Column(db.Integer, db.ForeignKey(
-        'order.id'), primary_key=True)
-    product_id = db.Column(db.Integer, primary_key=True)
-    quantity = db.Column(db.Integer)
-    order = db.relationship(
-        'Order', backref=db.backref('order_products', lazy=True))
-
-
 # Rutas de la aplicación
 
 
@@ -69,12 +52,12 @@ def register():
     data = request.json
     if not data or 'email' not in data or 'password' not in data:
         return jsonify({'error': 'Missing data'}), 400
-    if User.query.filter_by(email=data['email']).first():
+    if Users.query.filter_by(email=data['email']).first():
         return jsonify({'error': 'Email already registered'}), 409
     try:
         hashed_password = generate_password_hash(
             data['password'], method='pbkdf2:sha256', salt_length=8)
-        new_user = User(name=data['name'], lastname=data['lastname'], email=data['email'],
+        new_user = Users(name=data['name'], lastname=data['lastname'], email=data['email'],
                         # Default role_id
                         password=hashed_password, role_id=data.get('role_id', 1))
         db.session.add(new_user)
@@ -90,7 +73,7 @@ def login():
     data = request.json
     if not data or 'email' not in data or 'password' not in data:
         return jsonify({'error': 'Missing data'}), 400
-    user = User.query.filter_by(email=data['email']).first()
+    user = Users.query.filter_by(email=data['email']).first()
     if user and check_password_hash(user.password, data['password']):
         login_user(user)
         return jsonify({'authenticated': True}), 200
