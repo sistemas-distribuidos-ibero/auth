@@ -59,7 +59,7 @@ def register():
             data['password'], method='pbkdf2:sha256', salt_length=8)
         new_user = Users(name=data['name'], lastname=data['lastname'], email=data['email'],
                         # Default role_id
-                        password=hashed_password, role_id=data.get('role_id', 1))
+                        password=hashed_password, id_role=1)
         db.session.add(new_user)
         db.session.commit()
         return jsonify({'message': 'User registered successfully'}), 201
@@ -78,7 +78,13 @@ def login():
         login_user(user)
         return jsonify({
             'authenticated': True,
-            'user': user.to_dict(),   
+            'user': {
+                'id': user.id,
+                'id_role': user.id_role,
+                'name': user.name,
+                'lastname': user.lastname,
+                'email': user.email
+            },
         }), 200
     else:
         return jsonify({'authenticated': False}), 401
